@@ -3,6 +3,11 @@ on:
   push:
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Version tag to publish
+        default: v0.1.0
+        required: true
 permissions:
   contents: read
 jobs:
@@ -14,7 +19,7 @@ jobs:
           - os: windows-latest
             flags: --win --x64
             name: windows
-          - os: macos-latest
+          - os: macos-15-intel
             flags: --mac --x64 --arm64
             name: macos
           - os: ubuntu-latest
@@ -43,7 +48,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -57,9 +62,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
         run: |
           cd installers
           sha256sum * > SHA256SUMS.txt
-          gh release create "$RELEASE_TAG" --title "CommBee Desktop $RELEASE_TAG" --notes "CommBee desktop beta for Windows, macOS (Apple Silicon and Intel), and Linux. An internet connection is required. Windows/macOS builds are unsigned; macOS builds are not notarized. Download only from this official repository."
-          gh release upload "$RELEASE_TAG" ./*
+          gh release view "$RELEASE_TAG" || gh release create "$RELEASE_TAG" --title "CommBee Desktop $RELEASE_TAG" --notes "CommBee desktop beta for Windows, macOS (Apple Silicon and Intel), and Linux. An internet connection is required. Windows/macOS builds are unsigned; macOS builds are not notarized. Download only from this official repository."
+          gh release upload "$RELEASE_TAG" ./* --clobber
