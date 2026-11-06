@@ -6,7 +6,7 @@ test('screen chooser denies untrusted frames and accepts only its own selected s
     isDestroyed(){return false;}close(){this.emit('closed');}async loadFile(){this.webContents.emit('did-finish-load');}
   }
   const electron={app:{requestSingleInstanceLock:()=>false,quit(){},on(){}},BrowserWindow:Window,ipcMain:ipc,desktopCapturer:{getSources:async()=>{queried++;return[{id:'screen:1',name:'Test screen',thumbnail:{toDataURL:()=>''}}];}}};
-  const context={require:id=>id==='electron'?electron:id==='./policy.cjs'?require('../policy.cjs'):require(id),__dirname:path.resolve(__dirname,'..'),process,module:{exports:{}}};
+  const context={require:id=>id==='electron'?electron:id.startsWith('./')?require(path.resolve(__dirname,'..',id)):require(id),__dirname:path.resolve(__dirname,'..'),process,module:{exports:{}}};
   vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../main.cjs'),'utf8')+'\nmodule.exports={capturePicker,setMain:value=>{main=value}};',context);
   const {capturePicker,setMain}=context.module.exports;setMain({isDestroyed:()=>false});
   let results=[];await capturePicker({securityOrigin:'https://evil.example',frame:{}},v=>results.push(v));assert.equal(results[0],null);assert.equal(queried,0);

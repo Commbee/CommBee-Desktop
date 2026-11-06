@@ -1,0 +1,2 @@
+const {contextBridge,ipcRenderer}=require('electron');
+if(location.origin==='https://commbee-beta.onrender.com')contextBridge.exposeInMainWorld('commbeeDesktop',Object.freeze({getInfo:()=>ipcRenderer.invoke('commbee-desktop-info'),checkUpdates:()=>ipcRenderer.invoke('commbee-desktop-check'),downloadUpdate:()=>ipcRenderer.invoke('commbee-desktop-update'),uninstall:()=>ipcRenderer.invoke('commbee-desktop-uninstall')}));

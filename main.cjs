@@ -2,6 +2,7 @@ const {app,BrowserWindow,Menu,session,dialog,shell,desktopCapturer,ipcMain,syste
 const path=require('node:path');
 const {pathToFileURL}=require('node:url');
 const {SITE,trusted,external}=require('./policy.cjs');
+const {installDesktopServices}=require('./desktop-services.cjs');
 let main;
 const grants=new Set();
 const allowed=new Set(['media','display-capture','notifications','clipboard-sanitized-write','fullscreen']);
@@ -9,7 +10,7 @@ const pickerUrl=pathToFileURL(path.join(__dirname,'picker.html')).href;
 if(!app.requestSingleInstanceLock())app.quit();
 else{
   app.on('second-instance',()=>{if(main){if(main.isMinimized())main.restore();main.show();main.focus();}});
-  app.whenReady().then(createWindow);
+  app.whenReady().then(()=>{installDesktopServices({app,ipcMain,dialog,shell,getWindow:()=>main});createWindow();});
 }
 async function capturePicker(request,callback){
   if(!trusted(request.securityOrigin)||!request.frame||request.frame!==request.frame.top){callback(null);return;}
@@ -49,7 +50,8 @@ function createWindow(){
     }catch{callback(false);}
   });
   ses.setDisplayMediaRequestHandler(capturePicker,{useSystemPicker:process.platform==='darwin'});
-  main=new BrowserWindow({width:1380,height:900,minWidth:390,minHeight:560,title:'CommBee',backgroundColor:'#f8f8f1',icon:path.join(__dirname,'assets/icon.png'),autoHideMenuBar:true,webPreferences:{partition:'persist:commbee',contextIsolation:true,sandbox:true,nodeIntegration:false,webSecurity:true,allowRunningInsecureContent:false,webviewTag:false}});
+  main=new BrowserWindow({width:1380,height:900,minWidth:390,minHeight:560,title:'CommBee',backgroundColor:'#f8f8f1',icon:path.join(__dirname,'assets/icon.png'),autoHideMenuBar:true,webPreferences:{preload:path.join(__dirname,'preload.cjs'),partition:'persist:commbee',contextIsolation:true,sandbox:true,nodeIntegration:false,webSecurity:true,allowRunningInsecureContent:false,webviewTag:false}});
+  main.webContents.setUserAgent(main.webContents.getUserAgent()+' CommBeeDesktop/'+app.getVersion());
   const openExternal=url=>{if(external(url))shell.openExternal(url).catch(()=>{});};
   main.webContents.setWindowOpenHandler(({url})=>{if(trusted(url))main.loadURL(url);else openExternal(url);return{action:'deny'};});
   main.webContents.on('will-navigate',(event,url)=>{if(!trusted(url)){event.preventDefault();openExternal(url);}});

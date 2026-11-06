@@ -1,6 +1,6 @@
 {
   "name": "commbee-desktop",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "CommBee desktop — your community, in its own window.",
   "author": "CommBee",
   "license": "UNLICENSED",
@@ -29,7 +29,9 @@
       "picker.html",
       "picker.cjs",
       "offline.html",
-      "assets/icon.png"
+      "assets/icon.png",
+      "preload.cjs",
+      "desktop-services.cjs"
     ],
     "artifactName": "CommBee-${version}-${os}-${arch}.${ext}",
     "win": {
@@ -44,7 +46,8 @@
       "perMachine": false,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "CommBee"
+      "shortcutName": "CommBee",
+      "deleteAppDataOnUninstall": false
     },
     "mac": {
       "target": [
